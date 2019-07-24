@@ -21,12 +21,29 @@
 #include "qml/QmlVideoOutput.h"
 #include "qml/rendering/VideoNode.h"
 
+#include "QDebug"
+
 VlcQmlVideoOutput::VlcQmlVideoOutput()
     : _fillMode(Vlc::PreserveAspectFit),
       _source(0),
-      _frameUpdated(false)
+      _frameUpdated(false),
+      _frameRate(0),
+      frameRateCounter(0)
 {
     setFlag(QQuickItem::ItemHasContents, true);
+
+    QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(timerCallback()));
+
+    timer->setInterval(1000);
+    timer->start();
+
+}
+
+void VlcQmlVideoOutput::timerCallback(void)
+{
+    setFrameRate(frameRateCounter);
+    frameRateCounter = 0;
 }
 
 VlcQmlVideoOutput::~VlcQmlVideoOutput()
@@ -104,6 +121,26 @@ void VlcQmlVideoOutput::setCropRatio(int cropRatio)
     update();
 
     emit cropRatioChanged();
+}
+
+int VlcQmlVideoOutput::frameRate() const
+{
+    if(_frameRate < 0 || _frameRate > 100)
+        return 0;
+    else
+        return _frameRate;
+}
+
+void VlcQmlVideoOutput::setFrameRate(int frameRateCount)
+{
+    if( _frameRate == frameRateCount)
+        return;
+
+    _frameRate = frameRateCount;
+
+    update();
+
+    emit frameRateChanged();
 }
 
 QSGNode *VlcQmlVideoOutput::updatePaintNode(QSGNode *oldNode,
@@ -184,4 +221,7 @@ void VlcQmlVideoOutput::presentFrame(const std::shared_ptr<const VlcYUVVideoFram
     _frame = frame;
     _frameUpdated = true;
     update();
+
+    frameRateCounter++;
+
 }

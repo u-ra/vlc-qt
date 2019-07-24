@@ -24,6 +24,9 @@
 #include <QQuickItem>
 #include <QPointer>
 
+#include "QTime"
+#include "QTimer"
+
 #include <VLCQtCore/Enums.h>
 
 #include "SharedExportQml.h"
@@ -75,6 +78,14 @@ class VLCQT_QML_EXPORT VlcQmlVideoOutput : public QQuickItem
         \see cropRatioChanged
      */
     Q_PROPERTY(int cropRatio READ cropRatio WRITE setCropRatio NOTIFY cropRatioChanged)
+
+    /*!
+        \brief Current frame rate
+        \see frameRate
+        \see setFrameRate
+        \see frameRateChanged
+     */
+    Q_PROPERTY(int frameRate READ frameRate WRITE setFrameRate NOTIFY frameRateChanged)
 
 public:
     VlcQmlVideoOutput();
@@ -146,12 +157,33 @@ public:
      */
     void setCropRatio(int cropRatio);
 
+    /*!
+        \brief Current frame rate
+        \return frame rate
+
+        Used as property in QML.
+     */
+    int frameRate() const;
+
+    /*!
+        \brief Set frame rate
+        \param frameRate new frame rate
+
+        Used as property in QML.
+     */
+    void setFrameRate(int frameRateCount);
+
 public slots:
     /*!
         \brief Set frame which will be rendered in the output.
         \param frame
      */
     void presentFrame(const std::shared_ptr<const VlcYUVVideoFrame> &frame);
+
+    /*!
+        \brief callback on setted interval time.
+     */
+    void timerCallback(void);
 
 signals:
     /*!
@@ -174,6 +206,11 @@ signals:
      */
     void cropRatioChanged();
 
+    /*!
+        \brief Frame rate changed signal
+     */
+    void frameRateChanged();
+
 private:
     virtual QSGNode *updatePaintNode(QSGNode *oldNode,
                                      UpdatePaintNodeData *data);
@@ -182,10 +219,14 @@ private:
     Vlc::Ratio _aspectRatio;
     Vlc::Ratio _cropRatio;
 
+    int _frameRate;
+
     QPointer<VlcQmlSource> _source;
 
     bool _frameUpdated;
     std::shared_ptr<const VlcYUVVideoFrame> _frame;
+
+    int frameRateCounter;
 };
 
 #endif // VLCQT_QMLVIDEOOUTPUT_H_
